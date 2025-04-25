@@ -1,10 +1,10 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QLineEdit, QTextEdit, QInputDialog, QHBoxLayout, QVBoxLayout, QFormLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QLineEdit, QTextEdit, QInputDialog, QHBoxLayout, QVBoxLayout
 
 
 import json
-'''
 
+'''
 note = {
     "Ласкаво просимо!" : {
         "текст" : "Це найкращий додаток для заміток у світі!",
@@ -86,7 +86,7 @@ layout_notes.addLayout(col_1, stretch = 2)
 layout_notes.addLayout(col_2, stretch = 1)
 notes_win.setLayout(layout_notes)
 
-
+###############
 def show_note():
     key = list_notes.selectedItems()[0].text()
     print(key)
@@ -95,8 +95,10 @@ def add_note():
     note_name, ok = QInputDialog.getText(notes_win, "Додати замітку", "Назва замітки")
     if ok and note_name:
         list_notes.addItem(note_name)
-        notes[note_name] = {"текст": "", "теги": []}
-        list_tags.addItem = notes[note_name]["теги"]
+        notes[note_name] = {"текст": "","теги": []}
+        list_tags.clear()
+        list_tags.addItems(notes[note_name]["теги"])
+
         print("after add note", notes)
 
 def save_note():
@@ -109,26 +111,50 @@ def save_note():
     else:
         print("замітка не обрана")
 
-def add_tag():
-    if list_notes.selectedItems():
-        key = list_notes.selectedItems()[0].text()
-        
-
 def del_note():
     if list_notes.selectedItems():
         key = list_notes.selectedItems()[0].text()
+        print("deleted note:", key)
         del notes[key]
+            #
         list_notes.clear()
         list_tags.clear()
         field_text.clear()
-        with open("notes_data.json", "w", encoding="utf-8") as file:
+            #
+        with open("notes_data.json", "w", encoding="utf-8") as file: #В ОКРЕМИЙ МЕТОД 
             json.dump(notes, file, ensure_ascii=False)
+
         list_notes.addItems(notes)
         print("notes after deleting", notes)
     else:
-        print("Не обрана замітка")      
+        print("не обрана замітка")
 
-
+def add_tag():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        tag = field_tag.text().strip()
+        if tag and tag not in notes[key]["теги"]:
+            notes[key]["теги"].append(tag)
+            list_tags.addItem(tag)
+            field_tag.clear()
+            with open("notes_data.json", "w", encoding="utf-8") as file:
+                json.dump(notes, file, ensure_ascii=False)
+        else:
+            print("вже існує")
+    else:
+        print("Не обрана замітка")
+ 
+def del_tag():
+    if list_notes.selectedItems() and list_tags.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        tag = list_tags.selectedItems()[0].text()
+        notes[key]["теги"].remove(tag)
+        list_tags.clear()
+        list_tags.addItems(notes[key]["теги"])
+        with open("notes_data.json", "w", encoding="utf-8") as file:
+                json.dump(notes, file, ensure_ascii=False)
+    else:
+        print("Не обрана замітка або тег")
 
 
 
@@ -139,9 +165,13 @@ notes_win.show()
 with open("notes_data.json", "r", encoding="utf-8") as file:
     notes = json.load(file)
     print(f"notes onload {notes}")
+
+
 list_notes.addItems(notes)
-
-
-
+button_tag_add.clicked.connect(add_tag)
+button_tag_del.clicked.connect(del_tag)
 list_notes.itemClicked.connect(show_note)
+button_note_create.clicked.connect(add_note)
+button_note_del.clicked.connect(del_note)
+button_note_save.clicked.connect(save_note)
 app.exec_()
